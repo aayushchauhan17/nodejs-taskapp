@@ -1,15 +1,20 @@
 const express = require("express");
 const { Users } = require("../db/models");
-const { getHashPassword, matchHashPassword } = require("../common.js");
+const {
+  getHashPassword,
+  matchHashPassword,
+  generateToken,
+} = require("../common.js");
 const router = new express.Router();
 
 router.post("/users", async (req, res) => {
   let { password, ...userData } = req.body;
   const hashPass = await getHashPassword(password);
   userData = { ...userData, password: hashPass };
-  console.log(userData);
-  const user = new Users(userData);
-  // console.log(user);
+  let user = new Users(userData);
+  const usertoken = await generateToken(user._id);
+  user.tokens = user.tokens.concat({ token: usertoken });
+  console.log(user);
   try {
     await user.save();
     res.status(201).send(user);
@@ -31,9 +36,12 @@ router.post("/users/login", async (req, res) => {
         user.password
       );
 
-      isPassMatch
-        ? res.send("Successfully Login")
-        : res.status(400).send("Wrong Password");
+      if (isPassMatch) {
+        const usertoken = await generateToken(user._id);
+        res.send({ user, usertoken });
+      } else {
+        res.status(400).send("Wrong Password");
+      }
     } else {
       res.status(400).send("User Not Found");
     }

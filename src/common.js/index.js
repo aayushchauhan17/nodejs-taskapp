@@ -1,4 +1,5 @@
 const bycrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 async function getHashPassword(pass) {
   const hashPass = await bycrypt.hash(pass, 8);
@@ -12,4 +13,12 @@ async function matchHashPassword(pass, hashpass) {
   return isMatch;
 }
 
-module.exports = { getHashPassword, matchHashPassword };
+async function generateToken(id) {
+  const token = jwt.sign({ _id: id.toString() }, "password", {
+    expiresIn: "7 days",
+  });
+
+  return token;
+}
+
+module.exports = { getHashPassword, matchHashPassword, generateToken };
