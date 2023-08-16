@@ -19,8 +19,11 @@ router.post("/users", async (req, res) => {
 });
 
 router.post("/users/login", async (req, res) => {
+  const email = req.body.email;
   try {
-    const user = Users.findByCredentials(req.body.email);
+    const user = await Users.findOne({ email });
+
+    console.log(user);
 
     if (user) {
       const isPassMatch = await matchHashPassword(
