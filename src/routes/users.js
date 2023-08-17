@@ -28,8 +28,6 @@ router.post("/users/login", async (req, res) => {
   try {
     const user = await Users.findOne({ email });
 
-    console.log(user);
-
     if (user) {
       const isPassMatch = await matchHashPassword(
         req.body.password,
@@ -38,7 +36,16 @@ router.post("/users/login", async (req, res) => {
 
       if (isPassMatch) {
         const usertoken = await generateToken(user._id);
-        res.send({ user, usertoken });
+        updateData = user.tokens.concat({ token: usertoken });
+        const userUpdated = await Users.findByIdAndUpdate(
+          user._id,
+          { tokens: updateData },
+          {
+            new: true,
+          }
+        );
+
+        res.send(userUpdated);
       } else {
         res.status(400).send("Wrong Password");
       }
