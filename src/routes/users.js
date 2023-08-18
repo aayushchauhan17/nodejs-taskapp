@@ -10,13 +10,13 @@ const router = new express.Router();
 
 router.post("/users", async (req, res) => {
   let { password, ...userData } = req.body;
-  const hashPass = await getHashPassword(password);
-  userData = { ...userData, password: hashPass };
-  let user = new Users(userData);
-  const usertoken = await generateToken(user._id);
-  user.tokens = user.tokens.concat({ token: usertoken });
-  console.log(user);
   try {
+    const hashPass = await getHashPassword(password.toString());
+    userData = { ...userData, password: hashPass };
+    let user = new Users(userData);
+    const usertoken = await generateToken(user._id);
+    user.tokens = user.tokens.concat({ token: usertoken });
+
     await user.save();
     res.status(201).send(user);
   } catch (e) {
@@ -46,7 +46,7 @@ router.post("/users/login", async (req, res) => {
           }
         );
 
-        res.send(userUpdated);
+        res.send({ data: userUpdated, token: usertoken });
       } else {
         res.status(400).send("Wrong Password");
       }
@@ -62,6 +62,25 @@ router.get("/users/me", authToken, async (req, res) => {
   res.send(req.user);
 });
 
+router.post("/users/logout", authToken, async (req, res) => {
+  req.user.tokens = req.user.tokens.filter((tok) => {
+    console.log(tok);
+    return tok.token != req.token;
+  });
+
+  await req.user.save();
+
+  res.send("Logout");
+});
+
+router.post("/users/logoutall", authToken, async (req, res) => {
+  req.user.tokens = [];
+
+  await req.user.save();
+
+  res.send("Logout All");
+});
+
 router.get("/users/:id", async (req, res) => {
   const _id = req.params.id;
   try {
@@ -71,7 +90,7 @@ router.get("/users/:id", async (req, res) => {
     }
     res.send(user);
   } catch (err) {
-    req.status(500).send(err);
+    res.status(500).send(err);
   }
 });
 
