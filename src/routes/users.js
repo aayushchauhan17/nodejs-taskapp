@@ -5,6 +5,7 @@ const {
   matchHashPassword,
   generateToken,
 } = require("../common.js");
+const { authToken } = require("../middleware/auth");
 const router = new express.Router();
 
 router.post("/users", async (req, res) => {
@@ -57,13 +58,8 @@ router.post("/users/login", async (req, res) => {
   }
 });
 
-router.get("/users", async (req, res) => {
-  try {
-    const users = await Users.find({});
-    res.send(users);
-  } catch (e) {
-    req.status(500).send(e);
-  }
+router.get("/users/me", authToken, async (req, res) => {
+  res.send(req.user);
 });
 
 router.get("/users/:id", async (req, res) => {
