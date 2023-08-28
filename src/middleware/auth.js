@@ -15,6 +15,7 @@ async function authToken(req, res, next) {
     }
 
     req.token = token;
+
     req.user = user;
     next();
   } catch (e) {
